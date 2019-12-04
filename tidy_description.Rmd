@@ -32,7 +32,29 @@ theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
 
 
-
-
-
-
+```{r message = FALSE}
+# tidying data and adding a column with the average salary
+law_data = read_csv("./data/Lawsuit.csv") %>% 
+  janitor::clean_names() %>% 
+  mutate(dept = recode_factor(dept, 
+                              "1" = "Biochemistry/Molecular Biology", 
+                              "2" = "Physiology",
+                              "3" = "Genetics", 
+                              "4" = "Pediatrics", 
+                              "5" = "Medicine", 
+                              "6" = "Surgery"),
+         gender = recode_factor(gender, 
+                                "1" = "Male", 
+                                "0" = "Female"),
+         clin = recode_factor(clin, 
+                              "1" = "Primarily clinical emphasis", 
+                              "0" = "Primarily research emphasis"),
+         cert = recode_factor(cert, 
+                              "1" = "Board certified", 
+                              "0" = "Not certified"),
+         rank = recode_factor(rank, 
+                              "1" = "Assistant", 
+                              "2" = "Associate", 
+                              "3" = "Full professor"),
+         avg_salary = (sal94 + sal95) / 2)
+```
