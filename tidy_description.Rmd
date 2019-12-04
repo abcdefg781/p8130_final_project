@@ -1,0 +1,42 @@
+---
+title: "project"
+output: 
+  pdf_document:
+  latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(arsenal)
+```
+
+```{r, message = FALSE}
+# tidy data
+law_data = read_csv("./Lawsuit.csv") %>% 
+  janitor::clean_names() %>% 
+  mutate(dept = recode_factor(dept, "1" = "Biochemistry/Molecular Biology", "2" = "Physiology",
+                              "3" = "Genetics", "4" = "Pediatrics", "5" = "Medicine", "6" =
+                                "Surgery"),
+         gender = recode_factor(gender, "1" = "Male", "0" = "Female"),
+         clin = recode_factor(clin, "1" = "Primarily clinical emphasis", "0" = "Primarily research emphasis"),
+         cert = recode_factor(cert, "1" = "Board certified", "0" = "not certified"),
+         rank = recode_factor(rank, "1" = "Assistant", "2" = "Associate", "3" = "Full professor"))
+```
+
+```{r}
+#  description
+my_labels <- list(dept = "Dept, n(%)", clin = "Clin, n(%)", cert = "Clin, n(%)", prate = "Prate", exper = "Exper", rank = "Rank, n(%)", sal94 = "Sal94", sal95 = "Sal95")
+
+my_controls <- tableby.control(
+               total = F,
+               test = F,
+               numeric.stats = c("meansd", "medianq1q3"),
+               digits = 2,
+               digits.pct = 2
+               )
+
+tab1 <- tableby(gender ~ dept + clin + cert + prate + exper + rank + sal94 + sal95, data = law_data, control = my_controls)
+summary(tab1, labelTranslations = my_labels, title = "Demographics and co-morbidities ", text = T) %>% 
+  knitr::kable()
+```
