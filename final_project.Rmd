@@ -1,19 +1,17 @@
 ---
-title: "project"
-output: 
-  pdf_document:
-  latex_engine: xelatex
+title: "P8130_final_project"
+author: "Michael Yan"
+date: "11/15/2019"
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(viridis)
-library(readxl)
-library(faraway)
-library(broom)
 library(dplyr)
-library(MASS)
+library(bestNormalize)
+library(arsenal)
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -119,8 +117,6 @@ hist(law_data$avg_salary,
 Based on the graph we see an apparent right skewness. Therefore, we are not able to use BoxCox as it does not transform negative response variables. Hence we will use the yeojohnson function from the bestNormalize package to determine the power (Lamda) at which the outcome variable needs to be raised.
 
 ```{r}
-install.packages("bestNormalize")
-library(bestNormalize)
 yeojohnson(law_data$avg_salary)
 ```
 Therefore, I will round up the Lamda and use the Log transformation of the response variable.
