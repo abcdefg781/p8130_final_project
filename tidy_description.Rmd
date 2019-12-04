@@ -58,3 +58,29 @@ law_data = read_csv("./data/Lawsuit.csv") %>%
                               "3" = "Full professor"),
          avg_salary = (sal94 + sal95) / 2)
 ```
+
+```{r}
+# data exploration pt. 1
+my_labels  =  list(dept = "Dept, n(%)", 
+                   clin = "Clin, n(%)", 
+                   cert = "Clin, n(%)", 
+                   prate = "Prate", 
+                   exper = "Exper", 
+                   rank = "Rank, n(%)", 
+                   sal94 = "Sal94", 
+                   sal95 = "Sal95",
+                   avg_salary = "Average Salary")
+
+my_controls = tableby.control(
+               total = F,
+               test = F,
+               numeric.stats = c("meansd", "medianq1q3"),
+               digits = 2,
+               digits.pct = 2)
+
+table1 = tableby(gender ~ dept + clin + cert + prate + exper + rank + sal94 + sal95 + avg_salary, data = law_data, control = my_controls)
+
+summary(table1, labelTranslations = my_labels, 
+        title = "Demographics and co-morbidities ", text = T) %>% 
+  knitr::kable()
+```
