@@ -84,3 +84,62 @@ summary(table1, labelTranslations = my_labels,
         title = "Demographics and co-morbidities ", text = T) %>% 
   knitr::kable()
 ```
+
+Assumptions about residuals:
+1. Normally Distributed
+2. They have the same variance at every predictor (Homoscedasticity)
+3. They are independent of one another
+```{r}
+# data exploration pt. 2
+# investigate the shape of the distribution for variable ‘avg_salary’ and try different transformations
+law_model = lm(avg_salary ~ dept + clin + cert + prate + exper + rank + avg_salary, data = law_data)
+summary(law_model)
+
+par(mfrow = c(2, 2))
+plot(law_model)
+```
+
+Based on the residual vs. fitted values plot, there is a pattern and one can't say that the points are evenly distributed along the residuals = 0 dash line. This indicates that there is going to be a transformation of
+the average salary. 
+
+The normal Q-Q plot further emphasizes this decision since a number of data points on the near the tail on the right side are not aligned with the dash line, indicating the residuals are not normal. 
+
+The scale-location plot is used to test for homoscedasticity and since points are approximately evenly spread around the line, we can conclude that variance of residuals are approximately constant across the range of all predictor variables. 
+
+There is presence of point close to the boundary, dashed-line of the Cook’s distance, those have to be tested as potential outliers and a decision
+have to be made about their relevance to the overal population.
+
+* Yeo-Johnson: Test to Determine the best Transformation for average salary.
+```{r}
+par(mfrow = c(1, 1))
+hist(law_data$avg_salary,
+     main = "Untransformed Response Variable",
+     xlab = "Average salary")
+```
+Based on the graph we see an apparent right skewness. Therefore, we are not able to use BoxCox as it does not transform negative response variables. Hence we will use the yeojohnson function from the bestNormalize package to determine the power (Lamda) at which the outcome variable needs to be raised.
+
+```{r}
+install.packages("bestNormalize")
+library(bestNormalize)
+yeojohnson(law_data$avg_salary)
+```
+Therefore, I will round up the Lamda and use the Log transformation of the response variable.
+
+```{r}
+hist(log(law_data$avg_salary),
+main = "Log-Transformed Response Variable",
+xlab = "Log-Transformed average salary")
+```
+After doing log-transformation, the histogram shows normal distribution of the response variable, in this case, the log-transformed average salary.
+
+* Building a new Multiple Regression Model
+```{r}
+law_log_model = lm(log(avg_salary) ~ dept + clin + cert + prate + exper + rank + avg_salary, data = law_data)
+
+summary(law_log_model)
+```
+
+
+
+
+
