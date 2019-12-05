@@ -2,7 +2,7 @@
 title: "P8130_final_project"
 author: "Michael Yan"
 date: "11/15/2019"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -70,8 +70,8 @@ my_labels  =  list(dept = "Dept, n(%)",
                    avg_salary = "Average Salary")
 
 my_controls = tableby.control(
-               total = F,
-               test = F,
+               total = T,
+               test = T,
                numeric.stats = c("meansd", "medianq1q3"),
                digits = 2,
                digits.pct = 2)
@@ -79,7 +79,7 @@ my_controls = tableby.control(
 table1 = tableby(gender ~ dept + clin + cert + prate + exper + rank + sal94 + sal95 + avg_salary, data = law_data, control = my_controls)
 
 summary(table1, labelTranslations = my_labels, 
-        title = "Demographics and co-morbidities ", text = T) %>% 
+        title = "EDA", text = T) %>% 
   knitr::kable()
 ```
 
