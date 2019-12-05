@@ -61,7 +61,7 @@ law_data = read_csv("./data/Lawsuit.csv") %>%
 # data exploration pt. 1
 my_labels  =  list(dept = "Dept, n(%)", 
                    clin = "Clin, n(%)", 
-                   cert = "Clin, n(%)", 
+                   cert = "Cert, n(%)", 
                    prate = "Prate", 
                    exper = "Exper", 
                    rank = "Rank, n(%)", 
