@@ -90,7 +90,7 @@ Assumptions about residuals:
 ```{r}
 # data exploration pt. 2
 # investigate the shape of the distribution for variable ‘avg_salary’ and try different transformations
-law_model = lm(avg_salary ~ dept + clin + cert + prate + exper + rank + avg_salary, data = law_data)
+law_model = lm(avg_salary ~ dept + clin + cert + prate + exper + rank + gender, data = law_data)
 summary(law_model)
 
 par(mfrow = c(2, 2))
@@ -130,7 +130,7 @@ After doing log-transformation, the histogram shows normal distribution of the r
 
 * Building a new Multiple Regression Model
 ```{r}
-law_log_model = lm(log(avg_salary) ~ dept + clin + cert + prate + exper + rank + avg_salary, data = law_data)
+law_log_model = lm(log(avg_salary) ~ dept + clin + cert + prate + exper + rank + gender, data = law_data)
 
 summary(law_log_model)
 ```
