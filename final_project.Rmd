@@ -136,6 +136,41 @@ summary(law_log_model)
 ```
 
 
+```{r}
+#fit the model with only one variable:gender
+law_data_con = law_data %>% 
+  select(gender,dept,clin,cert,prate,exper,rank,avg_salary)
+
+fit_1_sum = lm(log(avg_salary) ~ gender,data = law_data_con) %>% 
+  summary() %>% 
+  broom::tidy() %>% 
+  mutate(model = "log(avg_salary) ~ gender")
+
+#fit all other predicators with gender
+p_value_list = vector("list",length = 6)
+for (i in 2:7){
+  fitml = as.formula(paste0("log(avg_salary) ~ gender +",names(law_data_con)[i],collapse = ""))
+  p_value_list[[i-1]] = summary(lm(fitml,data = law_data_con ))
+}
+
+#tidy the outcome into a dataframe
+p_value = vector("list",length = 6)
+for (i in 1:6){
+  p_value[[i]] = broom::tidy(p_value_list[[i]]) %>% 
+    mutate(
+      model = paste0("log(avg_salary) ~ gender +",names(law_data_con)[i+1],collapse = "")
+    )
+}
+
+p_value = bind_rows(fit_1_sum,p_value)
+confounder = p_value %>% 
+    dplyr::select(model,everything()) %>% 
+    filter(term == "genderFemale") %>% 
+    mutate(change_rate = round((estimate + 0.3862374)/(-0.3862374),3)) %>% 
+    dplyr::select(model,term,estimate,change_rate)
+
+knitr::kable(confounder)
+```
 
 
 

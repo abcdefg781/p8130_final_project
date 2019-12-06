@@ -751,6 +751,93 @@ summary(law_log_model)</code></pre>
 ## Residual standard error: 0.1335 on 248 degrees of freedom
 ## Multiple R-squared:  0.9343, Adjusted R-squared:  0.9311 
 ## F-statistic: 293.9 on 12 and 248 DF,  p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>#fit the model with only one variable:gender
+law_data_con = law_data %&gt;% 
+  select(gender,dept,clin,cert,prate,exper,rank,avg_salary)
+
+fit_1_sum = lm(log(avg_salary) ~ gender,data = law_data_con) %&gt;% 
+  summary() %&gt;% 
+  broom::tidy() %&gt;% 
+  mutate(model = &quot;log(avg_salary) ~ gender&quot;)
+
+#fit all other predicators with gender
+p_value_list = vector(&quot;list&quot;,length = 6)
+for (i in 2:7){
+  fitml = as.formula(paste0(&quot;log(avg_salary) ~ gender +&quot;,names(law_data_con)[i],collapse = &quot;&quot;))
+  p_value_list[[i-1]] = summary(lm(fitml,data = law_data_con ))
+}
+
+#tidy the outcome into a dataframe
+p_value = vector(&quot;list&quot;,length = 6)
+for (i in 1:6){
+  p_value[[i]] = broom::tidy(p_value_list[[i]]) %&gt;% 
+    mutate(
+      model = paste0(&quot;log(avg_salary) ~ gender +&quot;,names(law_data_con)[i+1],collapse = &quot;&quot;)
+    )
+}
+
+p_value = bind_rows(fit_1_sum,p_value)
+confounder = p_value %&gt;% 
+    dplyr::select(model,everything()) %&gt;% 
+    filter(term == &quot;genderFemale&quot;) %&gt;% 
+    mutate(change_rate = round((estimate + 0.3862374)/(-0.3862374),3)) %&gt;% 
+    dplyr::select(model,term,estimate,change_rate)
+
+knitr::kable(confounder)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">model</th>
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">change_rate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.3853044</td>
+<td align="right">-0.002</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender +dept</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.2052080</td>
+<td align="right">-0.469</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender +clin</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.3371822</td>
+<td align="right">-0.127</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender +cert</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.3328485</td>
+<td align="right">-0.138</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender +prate</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.2518135</td>
+<td align="right">-0.348</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender +exper</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.3075492</td>
+<td align="right">-0.204</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender +rank</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.3494810</td>
+<td align="right">-0.095</td>
+</tr>
+</tbody>
+</table>
 
 
 
