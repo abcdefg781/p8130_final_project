@@ -172,5 +172,7 @@ confounder = p_value %>%
 knitr::kable(confounder)
 ```
 
+The criterion for finding confounders of `gender` is that after adding another variable into the existed model,the change of slope of gender is over 10%.
 
-
+After running the code,I find that for variable `dept`,`clin`,``cert`,`prate` and `exper`
+the change of slope is over 10%,so these five variables are all confounders.

@@ -838,6 +838,8 @@ knitr::kable(confounder)</code></pre>
 </tr>
 </tbody>
 </table>
+<p>The criterion for finding confounders of <code>gender</code> is that after adding another variable into the existed model,the change of slope of gender is over 10%.</p>
+<p>After running the code,I find that for variable <code>dept</code>,<code>clin</code>,`<code>cert</code>,<code>prate</code> and <code>exper</code> the change of slope is over 10%,so these five variables are all confounders.</p>
 
 
 
