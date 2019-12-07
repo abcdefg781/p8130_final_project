@@ -751,11 +751,14 @@ summary(law_log_model)</code></pre>
 ## Residual standard error: 0.1335 on 248 degrees of freedom
 ## Multiple R-squared:  0.9343, Adjusted R-squared:  0.9311 
 ## F-statistic: 293.9 on 12 and 248 DF,  p-value: &lt; 2.2e-16</code></pre>
+<ul>
+<li>Find confounders</li>
+</ul>
 <pre class="r"><code>#fit the model with only one variable:gender
-law_data_con = law_data %&gt;% 
+law_data_change = law_data %&gt;% 
   select(gender,dept,clin,cert,prate,exper,rank,avg_salary)
 
-fit_1_sum = lm(log(avg_salary) ~ gender,data = law_data_con) %&gt;% 
+fit_1_sum = lm(log(avg_salary) ~ gender,data = law_data_change) %&gt;% 
   summary() %&gt;% 
   broom::tidy() %&gt;% 
   mutate(model = &quot;log(avg_salary) ~ gender&quot;)
@@ -763,8 +766,9 @@ fit_1_sum = lm(log(avg_salary) ~ gender,data = law_data_con) %&gt;%
 #fit all other predicators with gender
 p_value_list = vector(&quot;list&quot;,length = 6)
 for (i in 2:7){
-  fitml = as.formula(paste0(&quot;log(avg_salary) ~ gender +&quot;,names(law_data_con)[i],collapse = &quot;&quot;))
-  p_value_list[[i-1]] = summary(lm(fitml,data = law_data_con ))
+  fitml = 
+    as.formula(paste0(&quot;log(avg_salary) ~ gender +&quot;,names(law_data_change)[i],collapse = &quot;&quot;))
+  p_value_list[[i-1]] = summary(lm(fitml,data = law_data_change ))
 }
 
 #tidy the outcome into a dataframe
@@ -772,7 +776,7 @@ p_value = vector(&quot;list&quot;,length = 6)
 for (i in 1:6){
   p_value[[i]] = broom::tidy(p_value_list[[i]]) %&gt;% 
     mutate(
-      model = paste0(&quot;log(avg_salary) ~ gender +&quot;,names(law_data_con)[i+1],collapse = &quot;&quot;)
+      model = paste0(&quot;log(avg_salary) ~ gender +&quot;,names(law_data_change)[i+1],collapse = &quot;&quot;)
     )
 }
 
@@ -840,6 +844,270 @@ knitr::kable(confounder)</code></pre>
 </table>
 <p>The criterion for finding confounders of <code>gender</code> is that after adding another variable into the existed model,the change of slope of gender is over 10%.</p>
 <p>After running the code,I find that for variable <code>dept</code>,<code>clin</code>,`<code>cert</code>,<code>prate</code> and <code>exper</code> the change of slope is over 10%,so these five variables are all confounders.</p>
+<p>*Find interactions</p>
+<pre class="r"><code>#fit all other predicators with gender
+interaction_list = vector(&quot;list&quot;,length = 7)
+for (i in 2:7){
+  fitml_inter = 
+    as.formula(paste0(&quot;log(avg_salary) ~ gender * &quot;,names(law_data_change)[i],collapse = &quot;&quot;))
+  interaction_list[[i-1]] = summary(lm(fitml_inter,data = law_data_change))
+}
+
+#tidy the outcome into a dataframe
+interaction_p_value = vector(&quot;list&quot;,length = 6)
+for (i in 1:6){
+  interaction_p_value[[i]] = broom::tidy(interaction_list[[i]]) %&gt;% 
+    mutate(
+      model1 = paste0(&quot;log(avg_salary) ~ gender *&quot;,names(law_data_change)[i+1],collapse = &quot;&quot;)
+    )
+}
+
+interaction_p_value = bind_rows(interaction_p_value)
+interaction_table = interaction_p_value %&gt;% 
+    dplyr::select(model1,everything()) %&gt;% 
+    filter(term != &quot;(Intercept)&quot;) %&gt;% 
+    dplyr::select(model1,everything())
+
+knitr::kable(interaction_table)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">model1</th>
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *dept</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.1673391</td>
+<td align="right">0.0730127</td>
+<td align="right">-2.2919168</td>
+<td align="right">0.0227456</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *dept</td>
+<td align="left">deptPhysiology</td>
+<td align="right">-0.0611705</td>
+<td align="right">0.0730127</td>
+<td align="right">-0.8378067</td>
+<td align="right">0.4029427</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *dept</td>
+<td align="left">deptGenetics</td>
+<td align="right">0.3047431</td>
+<td align="right">0.0923546</td>
+<td align="right">3.2997063</td>
+<td align="right">0.0011094</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *dept</td>
+<td align="left">deptPediatrics</td>
+<td align="right">0.2738989</td>
+<td align="right">0.0923546</td>
+<td align="right">2.9657315</td>
+<td align="right">0.0033131</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *dept</td>
+<td align="left">deptMedicine</td>
+<td align="right">0.6493277</td>
+<td align="right">0.0584102</td>
+<td align="right">11.1166872</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *dept</td>
+<td align="left">deptSurgery</td>
+<td align="right">1.0827838</td>
+<td align="right">0.0629291</td>
+<td align="right">17.2064213</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *dept</td>
+<td align="left">genderFemale:deptPhysiology</td>
+<td align="right">-0.1491188</td>
+<td align="right">0.1082954</td>
+<td align="right">-1.3769639</td>
+<td align="right">0.1697601</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *dept</td>
+<td align="left">genderFemale:deptGenetics</td>
+<td align="right">-0.2071533</td>
+<td align="right">0.1324514</td>
+<td align="right">-1.5639950</td>
+<td align="right">0.1190887</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *dept</td>
+<td align="left">genderFemale:deptPediatrics</td>
+<td align="right">0.0320257</td>
+<td align="right">0.1221737</td>
+<td align="right">0.2621330</td>
+<td align="right">0.7934356</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *dept</td>
+<td align="left">genderFemale:deptMedicine</td>
+<td align="right">0.0027864</td>
+<td align="right">0.0935019</td>
+<td align="right">0.0298010</td>
+<td align="right">0.9762497</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *dept</td>
+<td align="left">genderFemale:deptSurgery</td>
+<td align="right">0.0344845</td>
+<td align="right">0.1412538</td>
+<td align="right">0.2441312</td>
+<td align="right">0.8073302</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *clin</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.3781961</td>
+<td align="right">0.0603118</td>
+<td align="right">-6.2706803</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *clin</td>
+<td align="left">clinPrimarily research emphasis</td>
+<td align="right">-0.6515345</td>
+<td align="right">0.0620016</td>
+<td align="right">-10.5083570</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *clin</td>
+<td align="left">genderFemale:clinPrimarily research emphasis</td>
+<td align="right">0.1024132</td>
+<td align="right">0.0953048</td>
+<td align="right">1.0745860</td>
+<td align="right">0.2835680</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *cert</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.3598598</td>
+<td align="right">0.0623004</td>
+<td align="right">-5.7762043</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *cert</td>
+<td align="left">certNot certified</td>
+<td align="right">-0.5619459</td>
+<td align="right">0.0778083</td>
+<td align="right">-7.2221856</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *cert</td>
+<td align="left">genderFemale:certNot certified</td>
+<td align="right">0.0920523</td>
+<td align="right">0.1150099</td>
+<td align="right">0.8003866</td>
+<td align="right">0.4242261</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *prate</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.3736254</td>
+<td align="right">0.1091316</td>
+<td align="right">-3.4236226</td>
+<td align="right">0.0007190</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *prate</td>
+<td align="left">prate</td>
+<td align="right">-0.1991599</td>
+<td align="right">0.0125933</td>
+<td align="right">-15.8147343</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *prate</td>
+<td align="left">genderFemale:prate</td>
+<td align="right">0.0240074</td>
+<td align="right">0.0201037</td>
+<td align="right">1.1941779</td>
+<td align="right">0.2335094</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *exper</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.4459225</td>
+<td align="right">0.1206010</td>
+<td align="right">-3.6975021</td>
+<td align="right">0.0002662</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *exper</td>
+<td align="left">exper</td>
+<td align="right">0.0134442</td>
+<td align="right">0.0055660</td>
+<td align="right">2.4154112</td>
+<td align="right">0.0164158</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *exper</td>
+<td align="left">genderFemale:exper</td>
+<td align="right">0.0163715</td>
+<td align="right">0.0121909</td>
+<td align="right">1.3429210</td>
+<td align="right">0.1804823</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *rank</td>
+<td align="left">genderFemale</td>
+<td align="right">-0.5194156</td>
+<td align="right">0.0906578</td>
+<td align="right">-5.7294103</td>
+<td align="right">0.0000000</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *rank</td>
+<td align="left">rankAssociate</td>
+<td align="right">-0.1434069</td>
+<td align="right">0.1006319</td>
+<td align="right">-1.4250643</td>
+<td align="right">0.1553614</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *rank</td>
+<td align="left">rankFull professor</td>
+<td align="right">-0.0258974</td>
+<td align="right">0.0906578</td>
+<td align="right">-0.2856608</td>
+<td align="right">0.7753698</td>
+</tr>
+<tr class="odd">
+<td align="left">log(avg_salary) ~ gender *rank</td>
+<td align="left">genderFemale:rankAssociate</td>
+<td align="right">0.2720005</td>
+<td align="right">0.1537859</td>
+<td align="right">1.7686957</td>
+<td align="right">0.0781401</td>
+</tr>
+<tr class="even">
+<td align="left">log(avg_salary) ~ gender *rank</td>
+<td align="left">genderFemale:rankFull professor</td>
+<td align="right">0.4056607</td>
+<td align="right">0.1580574</td>
+<td align="right">2.5665410</td>
+<td align="right">0.0108435</td>
+</tr>
+</tbody>
+</table>
+<p>As we can see from the result,when we focus on p-value,the only interaction is <code>rank</code></p>
 
 
 
