@@ -83,57 +83,31 @@ summary(table1, labelTranslations = my_labels,
   knitr::kable()
 ```
 
-Assumptions about residuals:
-1. Normally Distributed
-2. They have the same variance at every predictor (Homoscedasticity)
-3. They are independent of one another
-```{r}
-# data exploration pt. 2
-# investigate the shape of the distribution for variable ‘avg_salary’ and try different transformations
-law_model = lm(avg_salary ~ dept + clin + cert + prate + exper + rank + gender, data = law_data)
-summary(law_model)
-
-par(mfrow = c(2, 2))
-plot(law_model)
-```
-
-Based on the residual vs. fitted values plot, there is a pattern and one can't say that the points are evenly distributed along the residuals = 0 dash line. This indicates that there is going to be a transformation of
-the average salary. 
-
-The normal Q-Q plot further emphasizes this decision since a number of data points on the near the tail on the right side are not aligned with the dash line, indicating the residuals are not normal. 
-
-The scale-location plot is used to test for homoscedasticity and since points are approximately evenly spread around the line, we can conclude that variance of residuals are approximately constant across the range of all predictor variables. 
-
-There is presence of point close to the boundary, dashed-line of the Cook’s distance, those have to be tested as potential outliers and a decision
-have to be made about their relevance to the overal population.
 
 * Yeo-Johnson: Test to Determine the best Transformation for average salary.
 ```{r}
-par(mfrow = c(1, 1))
+# data exploration pt. 2
+# investigate the shape of the distribution for variable ‘avg_salary’ and try different transformation
 hist(law_data$avg_salary,
      main = "Untransformed Response Variable",
      xlab = "Average salary")
 ```
+
 Based on the graph we see an apparent right skewness. Therefore, we are not able to use BoxCox as it does not transform negative response variables. Hence we will use the yeojohnson function from the bestNormalize package to determine the power (Lamda) at which the outcome variable needs to be raised.
 
 ```{r}
 yeojohnson(law_data$avg_salary)
 ```
+
 Therefore, I will round up the Lamda and use the Log transformation of the response variable.
 
 ```{r}
 hist(log(law_data$avg_salary),
 main = "Log-Transformed Response Variable",
-xlab = "Log-Transformed average salary")
+xlab = "Log-Transformed average salary") 
 ```
+
 After doing log-transformation, the histogram shows normal distribution of the response variable, in this case, the log-transformed average salary.
-
-* Building a new Multiple Regression Model
-```{r}
-law_log_model = lm(log(avg_salary) ~ dept + clin + cert + prate + exper + rank + gender, data = law_data)
-
-summary(law_log_model)
-```
 
 * Find confounders
 ```{r}
@@ -168,7 +142,7 @@ p_value = bind_rows(fit_sum,p_value)
 confounder = p_value %>% 
     dplyr::select(model,everything()) %>% 
     filter(term == "genderFemale") %>% 
-    mutate(change_rate = round((estimate + 0.3853044)/(-0.3853044),3)) %>% 
+    mutate(change_rate = round((-0.3853044 - estimate)/(-0.3853044),3)) %>% 
     dplyr::select(model,term,estimate,change_rate)
 
 knitr::kable(confounder)
@@ -191,14 +165,14 @@ for (i in 2:7) {
 }
 #fit predicators with gender
 interaction = vector("list",length = 6)
-for (i in 2:7){
+for (i in 2:7) {
   fitml_inter = 
     as.formula(paste0("log(avg_salary) ~ gender * ",names(law_data_change)[i],collapse = ""))
-  interaction[[i-1]] = summary(lm(fitml_inter,data = law_data_change))
+  interaction[[i - 1]] = summary(lm(fitml_inter,data = law_data_change))
 }
 
 interaction_p_value = vector("list",length = 6)
-for (i in 1:6){
+for (i in 1:6) {
   interaction_p_value[[i]] = broom::tidy(interaction[[i]]) %>% 
     mutate(
       model1 = paste0("log(avg_salary) ~ gender *",names(law_data_change)[i + 1],collapse = "")
@@ -217,19 +191,14 @@ knitr::kable(interaction_table)
 
 As we can see from the result, when we focus on p-value,the only interaction is `rank`. The effect of gender on salary is different with respect to the rank. 
 
-
 ```{r}
 reg_y_prate = lm(log(avg_salary)~ gender * rank + dept + clin + cert + exper + prate, data = law_data_change)
-# prate is not significant
+# prate is not significant 
+# Holding all other variables constant, prate does not have significant assocation with average salary. We delete prate
 
-reg_n_prate = lm(log(avg_salary)~ gender * rank + dept + clin + cert + exper, data = law_data_change) 
 # final model
-
-anova(reg_n_prate, reg_y_prate)
-
-reg_n_prate %>% summary()
-par(nfrow = c(2,2))
-plot(reg_n_prate)
+reg_n_prate = lm(log(avg_salary)~ gender * rank + dept + clin + cert + exper, data = law_data_change) 
+summary(reg_n_prate)
 ```
 
 
@@ -248,19 +217,29 @@ rank_prof =
   filter(rank == "Full professor")
 
 # Rank = Assistant
-fit_assi = lm(log(avg_salary)~ gender + dept + clin + cert + prate + exper, data = rank_assi)
+fit_assi = lm(log(avg_salary)~ gender + dept + clin + cert + exper, data = rank_assi)
 summary(fit_assi)
-step(fit_assi)
-lm(log(avg_salary)~ gender + dept + cert + prate + exper, data = rank_assi) %>% 
-  summary()
 
 # Rank = Associate: gender not significant
-fit_asso = lm(log(avg_salary)~ gender + dept + clin + cert + prate + exper, data = rank_asso)
+# means no discrimination between male and female in rank of associate ?
+fit_asso = lm(log(avg_salary)~ gender + dept + clin + cert + exper, data = rank_asso)
 summary(fit_asso)
-step(fit_asso)
 
 # Rank = Full professor: gender not significant
-fit_prof = lm(log(avg_salary)~ gender + dept + clin + cert + prate + exper, data = rank_prof)
+# means no discrimination between male and female in rank of full professor?
+fit_prof = lm(log(avg_salary)~ gender + dept + clin + cert + exper, data = rank_prof)
 summary(fit_prof)
-step(fit_prof)
+```
+
+
+Assumptions about residuals:
+1. Normally Distributed
+2. They have the same variance at every predictor (Homoscedasticity)
+3. They are independent of one another
+
+```{r}
+law_model = lm(log(avg_salary)~ gender * rank + dept + clin + cert + exper, data = law_data_change)
+
+par(mfrow = c(2, 2))
+plot(law_model)
 ```
