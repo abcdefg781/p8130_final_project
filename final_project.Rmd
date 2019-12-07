@@ -182,32 +182,24 @@ the change of slope is over 10%, so these five variables are all confounders.
 
 * Find interactions
 ```{r}
-<<<<<<< HEAD
 #fit all other predicators with gender
 interaction_list = vector("list",length = 6)
 for (i in 2:7) {
   fitml_inter = 
     as.formula(paste0("log(avg_salary) ~ gender * ",names(law_data_change)[i],collapse = ""))
   interaction_list[[i - 1]] = summary(lm(fitml_inter,data = law_data_change))
-=======
+}
 #fit predicators with gender
 interaction = vector("list",length = 6)
 for (i in 2:7){
   fitml_inter = 
     as.formula(paste0("log(avg_salary) ~ gender * ",names(law_data_change)[i],collapse = ""))
   interaction[[i-1]] = summary(lm(fitml_inter,data = law_data_change))
->>>>>>> a39ffc89d97ad995e0237304a4ce25a4f67520ba
 }
 
-
 interaction_p_value = vector("list",length = 6)
-<<<<<<< HEAD
-for (i in 1:6) {
-  interaction_p_value[[i]] = broom::tidy(interaction_list[[i]]) %>% 
-=======
 for (i in 1:6){
   interaction_p_value[[i]] = broom::tidy(interaction[[i]]) %>% 
->>>>>>> a39ffc89d97ad995e0237304a4ce25a4f67520ba
     mutate(
       model1 = paste0("log(avg_salary) ~ gender *",names(law_data_change)[i + 1],collapse = "")
     )

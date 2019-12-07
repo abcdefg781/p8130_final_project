@@ -844,7 +844,6 @@ knitr::kable(confounder)</code></pre>
 </tbody>
 </table>
 <p>The criterion for finding confounders of <code>gender</code> is that after adding another variable into the existed model,the change of slope of gender is over 10%.</p>
-<<<<<<< HEAD
 <p>After running the code,I find that for variable <code>dept</code>,<code>clin</code>,`<code>cert</code>,<code>prate</code> and <code>exper</code> the change of slope is over 10%, so these five variables are all confounders.</p>
 <ul>
 <li>Find interactions</li>
@@ -855,27 +854,18 @@ for (i in 2:7) {
   fitml_inter = 
     as.formula(paste0(&quot;log(avg_salary) ~ gender * &quot;,names(law_data_change)[i],collapse = &quot;&quot;))
   interaction_list[[i - 1]] = summary(lm(fitml_inter,data = law_data_change))
-=======
-<p>After running the code,I find that for variable <code>dept</code>,<code>clin</code>,`<code>cert</code>,<code>prate</code> and <code>exper</code> the change of slope is over 10%,so these five variables are all confounders.</p>
-<p>*Find interactions</p>
-<pre class="r"><code>#fit predicators with gender
+}
+#fit predicators with gender
 interaction = vector(&quot;list&quot;,length = 6)
 for (i in 2:7){
   fitml_inter = 
     as.formula(paste0(&quot;log(avg_salary) ~ gender * &quot;,names(law_data_change)[i],collapse = &quot;&quot;))
   interaction[[i-1]] = summary(lm(fitml_inter,data = law_data_change))
->>>>>>> a39ffc89d97ad995e0237304a4ce25a4f67520ba
 }
 
-
 interaction_p_value = vector(&quot;list&quot;,length = 6)
-<<<<<<< HEAD
-for (i in 1:6) {
-  interaction_p_value[[i]] = broom::tidy(interaction_list[[i]]) %&gt;% 
-=======
 for (i in 1:6){
   interaction_p_value[[i]] = broom::tidy(interaction[[i]]) %&gt;% 
->>>>>>> a39ffc89d97ad995e0237304a4ce25a4f67520ba
     mutate(
       model1 = paste0(&quot;log(avg_salary) ~ gender *&quot;,names(law_data_change)[i + 1],collapse = &quot;&quot;)
     )
