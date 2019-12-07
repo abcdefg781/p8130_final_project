@@ -195,6 +195,7 @@ As we can see from the result, when we focus on p-value,the only interaction is 
 reg_y_prate = lm(log(avg_salary)~ gender * rank + dept + clin + cert + exper + prate, data = law_data_change)
 # prate is not significant 
 # Holding all other variables constant, prate does not have significant assocation with average salary. We delete prate
+## Question:or we just keep prate because we want to see the association
 
 # final model
 reg_n_prate = lm(log(avg_salary)~ gender * rank + dept + clin + cert + exper, data = law_data_change) 
