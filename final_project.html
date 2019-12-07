@@ -846,7 +846,7 @@ knitr::kable(confounder)</code></pre>
 <p>After running the code,I find that for variable <code>dept</code>,<code>clin</code>,`<code>cert</code>,<code>prate</code> and <code>exper</code> the change of slope is over 10%,so these five variables are all confounders.</p>
 <p>*Find interactions</p>
 <pre class="r"><code>#fit all other predicators with gender
-interaction_list = vector(&quot;list&quot;,length = 7)
+interaction_list = vector(&quot;list&quot;,length = 6)
 for (i in 2:7){
   fitml_inter = 
     as.formula(paste0(&quot;log(avg_salary) ~ gender * &quot;,names(law_data_change)[i],collapse = &quot;&quot;))
