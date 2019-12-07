@@ -99,7 +99,7 @@ Based on the graph we see an apparent right skewness. Therefore, we are not able
 yeojohnson(law_data$avg_salary)
 ```
 
-Therefore, I will round up the Lamda and use the Log transformation of the response variable.
+Therefore, we will round up the Lamda and use the Log transformation of the response variable.
 
 ```{r}
 hist(log(law_data$avg_salary),
@@ -107,11 +107,12 @@ main = "Log-Transformed Response Variable",
 xlab = "Log-Transformed average salary") 
 ```
 
-After doing log-transformation, the histogram shows normal distribution of the response variable, in this case, the log-transformed average salary.
+After doing log-transformation, the histogram shows an approximate normal distribution of the response variable, in this case, the log-transformed average salary.
+
 
 * Find confounders
 ```{r}
-#fit the model with only one variable:gender
+# Fit the model with only one variable:gender
 law_data_change = law_data %>% 
   select(gender,dept,clin,cert,prate,exper,rank,avg_salary)
 
@@ -148,9 +149,9 @@ confounder = p_value %>%
 knitr::kable(confounder)
 ```
 
-The criterion for finding confounders of `gender` is that after adding another variable into the existed model,the change of slope of gender is over 10%.
+The criterion for finding confounders of `gender` is that after adding another variable into the existed model,the change in slope of gender is over 10%.
 
-After running the code,I find that for variable `dept`,`clin`,``cert`,`prate` and `exper`
+After running the code, we found that for variable `dept`,`clin`,``cert`,`prate` and `exper`
 the change of slope is over 10%, so these five variables are all confounders.
 
 
