@@ -179,14 +179,14 @@ the change of slope is over 10%, so these five variables are all confounders.
 interaction_list = vector("list",length = 5)
 for (i in 2:6) {
   fitml_inter = 
-    as.formula(paste0("log(avg_salary) ~ gender+dept+clin+cert+exper+rank+gender * ",names(law_data_change)[i],collapse = ""))
+    as.formula(paste0("log(avg_salary) ~ gender+dept+clin+cert+exper+gender * ",names(law_data_change)[i],collapse = ""))
   interaction_list[[i - 1]] = summary(lm(fitml_inter,data = law_data_change))
 }
 #fit predicators with gender
 interaction = vector("list",length = 5)
 for (i in 2:6) {
   fitml_inter = 
-    as.formula(paste0("log(avg_salary) ~ gender+dept+clin+cert+exper+rank+gender * ",names(law_data_change)[i],collapse = ""))
+    as.formula(paste0("log(avg_salary) ~ gender+dept+clin+cert+exper+gender * ",names(law_data_change)[i],collapse = ""))
   interaction[[i - 1]] = summary(lm(fitml_inter,data = law_data_change))
 }
 
@@ -194,7 +194,7 @@ interaction_p_value = vector("list",length = 5)
 for (i in 1:5) {
   interaction_p_value[[i]] = broom::tidy(interaction[[i]]) %>% 
     mutate(
-      model1 = paste0("log(avg_salary) ~ gender+dept+clin+cert+exper+rank+gender *",names(law_data_change)[i + 1],collapse = "")
+      model1 = paste0("log(avg_salary) ~ gender+dept+clin+cert+exper+gender *",names(law_data_change)[i + 1],collapse = "")
     )
 }
 
@@ -208,11 +208,11 @@ interaction_table = interaction_p_value %>%
 knitr::kable(interaction_table)
 ```
 
-As we can see from the result, when we focus on p-value,the only interaction is `rank` and `exper`. The effect of gender on salary is different with respect to the rank and exper. 
+As we can see from the result, when we focus on p-value,the only interaction is `rank` , `clin` and `exper`. The effect of gender on salary is different with respect to the rank and exper. 
 
 ```{r}
 # final model
-reg_n_prate = lm(log(avg_salary)~ gender * rank + gender*exper+ dept + clin + cert , data = law_data_change) 
+reg_n_prate = lm(log(avg_salary)~ gender*rank + gender*exper+ gender*clin + dept + cert , data = law_data_change) 
 summary(reg_n_prate)
 ```
 
@@ -232,18 +232,37 @@ rank_prof =
   filter(rank == "Full professor")
 
 # Rank = Assistant
-fit_assi = lm(log(avg_salary)~ gender*exper+ dept + clin + cert, data = rank_assi)
+fit_assi = lm(log(avg_salary)~ gender*exper + gender*clin + dept+ cert, data = rank_assi)
 summary(fit_assi)
 
 # Rank = Associate: gender not significant
 # means no discrimination between male and female in rank of associate ?
-fit_asso = lm(log(avg_salary)~ gender*exper+ dept + clin + cert, data = rank_asso)
+fit_asso = lm(log(avg_salary)~ gender*exper + gender*clin + dept+ cert, data = rank_asso)
 summary(fit_asso)
 
 # Rank = Full professor: gender not significant
 # means no discrimination between male and female in rank of full professor?
-fit_prof =lm(log(avg_salary)~  gender*exper+ dept + clin + cert, data = rank_prof)
+fit_prof =lm(log(avg_salary)~  gender*exper + gender*clin + dept+ cert, data = rank_prof)
 summary(fit_prof)
+```
+```{r}
+# seperate regression models for clin
+clin_data = 
+  law_data_change %>% 
+  filter(clin == "Primarily clinical emphasis") 
+
+research_data =
+  law_data_change %>% 
+  filter(clin == "Primarily research emphasis") 
+
+
+# clin = Primarily clinical emphasis
+fit_clin = lm(log(avg_salary)~ gender*exper + gender*rank + dept+ cert, data = clin_data)
+summary(fit_clin)
+# clin = Primarily research emphasis
+fit_research = lm(log(avg_salary)~ gender*exper + gender*rank + dept+ cert, data = research_data)
+summary(fit_research)
+
 ```
 
 
@@ -253,7 +272,7 @@ Assumptions about residuals:
 3. They are independent of one another
 
 ```{r}
-law_model = lm(log(avg_salary)~ gender * rank + dept + clin + cert + exper * gender, data = law_data_change)
+law_model = lm(log(avg_salary)~ gender * rank + dept + gender*clin + cert + exper * gender, data = law_data_change)
 
 par(mfrow = c(2, 2))
 plot(law_model)
