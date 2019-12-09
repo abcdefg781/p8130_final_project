@@ -277,3 +277,62 @@ law_model = lm(log(avg_salary)~ gender * rank + dept + gender*clin + cert + expe
 par(mfrow = c(2, 2))
 plot(law_model)
 ```
+```{r}
+#delete the outlier and build a new dataset
+law_trans_minus = law_data[-c(184),]
+```
+
+```{r}
+# seperate regression models for rank
+rank_assi_minus = 
+  law_trans_minus %>% 
+  filter(rank == "Assistant") 
+
+rank_asso_minus =
+  law_trans_minus %>% 
+  filter(rank == "Associate")
+
+rank_prof_minus = 
+  law_trans_minus %>% 
+  filter(rank == "Full professor")
+
+# Rank = Assistant
+fit_assi_minus = lm(log(avg_salary)~ gender*exper + gender*clin + dept+ cert, data = rank_assi_minus)
+summary(fit_assi_minus)
+
+# Rank = Associate: gender not significant
+# means no discrimination between male and female in rank of associate ?
+fit_asso_minus = lm(log(avg_salary)~ gender*exper + gender*clin + dept+ cert, data = rank_asso_minus)
+summary(fit_asso_minus)
+
+# Rank = Full professor: gender not significant
+# means no discrimination between male and female in rank of full professor?
+fit_prof_minus =lm(log(avg_salary)~  gender*exper + gender*clin + dept+ cert, data = rank_prof_minus)
+summary(fit_prof_minus)
+```
+```{r}
+# seperate regression models for clin after delete the outlier
+clin_data_minus = 
+  law_trans_minus %>% 
+  filter(clin == "Primarily clinical emphasis") 
+
+research_data_minus =
+  law_trans_minus %>% 
+  filter(clin == "Primarily research emphasis") 
+
+
+# clin = Primarily clinical emphasis
+# gender is significant
+fit_clin_minus = lm(log(avg_salary)~ gender*exper + gender*rank + dept+ cert, data = clin_data_minus)
+summary(fit_clin_minus)
+
+# clin = Primarily research emphasis
+fit_research_minus = lm(log(avg_salary)~ gender*exper + gender*rank + dept+ cert, data = research_data_minus)
+summary(fit_research_minus)
+```
+```{r}
+#final model after deleting the outlier
+final_law_model = lm(log(avg_salary)~ gender * rank + dept + gender*clin + cert + exper * gender, data = law_trans_minus)
+summary(final_law_model)
+```
+
