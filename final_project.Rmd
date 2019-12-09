@@ -253,7 +253,7 @@ Assumptions about residuals:
 3. They are independent of one another
 
 ```{r}
-law_model = lm(log(avg_salary)~ gender * rank + dept + clin + cert + exper, data = law_data_change)
+law_model = lm(log(avg_salary)~ gender * rank + dept + clin + cert + exper * gender, data = law_data_change)
 
 par(mfrow = c(2, 2))
 plot(law_model)
