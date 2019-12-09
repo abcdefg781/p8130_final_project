@@ -108,13 +108,31 @@ xlab = "Log-Transformed average salary")
 ```
 
 After doing log-transformation, the histogram shows an approximate normal distribution of the response variable, in this case, the log-transformed average salary.
+```{r}
+law_data_1= read_csv("./data/Lawsuit.csv") %>% 
+  janitor::clean_names() 
+
+law_data_cor = law_data_1 %>% 
+  mutate(log_sal = log((sal94 + sal95) / 2)) %>% 
+  dplyr::select(-id,-sal94,-sal95)
+  
+library(corrplot)
+L_data = cor(as.matrix(law_data_cor))
+corrplot(L_data, method = "color",  
+         type = "upper", order = "hclust", 
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col = "darkblue", tl.srt = 45, #Text label color and rotation
+         # hide correlation coefficient on the principal diagonal
+         diag = FALSE 
+         )
+```
 
 
 * Find confounders
 ```{r}
 # Fit the model with only one variable:gender
 law_data_change = law_data %>% 
-  select(gender,dept,clin,cert,prate,exper,rank,avg_salary)
+  select(gender,dept,clin,cert,exper,rank,avg_salary)
 
 fit_sum = lm(log(avg_salary) ~ gender,data = law_data_change) %>% 
   summary() %>% 
@@ -122,16 +140,16 @@ fit_sum = lm(log(avg_salary) ~ gender,data = law_data_change) %>%
   mutate(model = "log(avg_salary) ~ gender")
 
 #fit all other predicators with gender
-p_value_list = vector("list",length = 6)
-for (i in 2:7) {
+p_value_list = vector("list",length = 5)
+for (i in 2:6) {
   fitml = 
     as.formula(paste0("log(avg_salary) ~ gender +",names(law_data_change)[i],collapse = ""))
   p_value_list[[i - 1]] = summary(lm(fitml,data = law_data_change ))
 }
 
 
-p_value = vector("list",length = 6)
-for (i in 1:6) {
+p_value = vector("list",length = 5)
+for (i in 1:5) {
   p_value[[i]] = broom::tidy(p_value_list[[i]]) %>% 
     mutate(
       model = paste0("log(avg_salary) ~ gender +",names(law_data_change)[i + 1],collapse = "")
@@ -158,25 +176,25 @@ the change of slope is over 10%, so these five variables are all confounders.
 * Find interactions
 ```{r}
 #fit all other predicators with gender
-interaction_list = vector("list",length = 6)
-for (i in 2:7) {
+interaction_list = vector("list",length = 5)
+for (i in 2:6) {
   fitml_inter = 
-    as.formula(paste0("log(avg_salary) ~ gender * ",names(law_data_change)[i],collapse = ""))
+    as.formula(paste0("log(avg_salary) ~ gender+dept+clin+cert+exper+rank+gender * ",names(law_data_change)[i],collapse = ""))
   interaction_list[[i - 1]] = summary(lm(fitml_inter,data = law_data_change))
 }
 #fit predicators with gender
-interaction = vector("list",length = 6)
-for (i in 2:7) {
+interaction = vector("list",length = 5)
+for (i in 2:6) {
   fitml_inter = 
-    as.formula(paste0("log(avg_salary) ~ gender * ",names(law_data_change)[i],collapse = ""))
+    as.formula(paste0("log(avg_salary) ~ gender+dept+clin+cert+exper+rank+gender * ",names(law_data_change)[i],collapse = ""))
   interaction[[i - 1]] = summary(lm(fitml_inter,data = law_data_change))
 }
 
-interaction_p_value = vector("list",length = 6)
-for (i in 1:6) {
+interaction_p_value = vector("list",length = 5)
+for (i in 1:5) {
   interaction_p_value[[i]] = broom::tidy(interaction[[i]]) %>% 
     mutate(
-      model1 = paste0("log(avg_salary) ~ gender *",names(law_data_change)[i + 1],collapse = "")
+      model1 = paste0("log(avg_salary) ~ gender+dept+clin+cert+exper+rank+gender *",names(law_data_change)[i + 1],collapse = "")
     )
 }
 
@@ -190,16 +208,11 @@ interaction_table = interaction_p_value %>%
 knitr::kable(interaction_table)
 ```
 
-As we can see from the result, when we focus on p-value,the only interaction is `rank`. The effect of gender on salary is different with respect to the rank. 
+As we can see from the result, when we focus on p-value,the only interaction is `rank` and `exper`. The effect of gender on salary is different with respect to the rank and exper. 
 
 ```{r}
-reg_y_prate = lm(log(avg_salary)~ gender * rank + dept + clin + cert + exper + prate, data = law_data_change)
-# prate is not significant 
-# Holding all other variables constant, prate does not have significant assocation with average salary. We delete prate
-## Question:or we just keep prate because we want to see the association
-
 # final model
-reg_n_prate = lm(log(avg_salary)~ gender * rank + dept + clin + cert + exper, data = law_data_change) 
+reg_n_prate = lm(log(avg_salary)~ gender * rank + gender*exper+ dept + clin + cert , data = law_data_change) 
 summary(reg_n_prate)
 ```
 
@@ -219,17 +232,17 @@ rank_prof =
   filter(rank == "Full professor")
 
 # Rank = Assistant
-fit_assi = lm(log(avg_salary)~ gender + dept + clin + cert + exper, data = rank_assi)
+fit_assi = lm(log(avg_salary)~ gender*exper+ dept + clin + cert, data = rank_assi)
 summary(fit_assi)
 
 # Rank = Associate: gender not significant
 # means no discrimination between male and female in rank of associate ?
-fit_asso = lm(log(avg_salary)~ gender + dept + clin + cert + exper, data = rank_asso)
+fit_asso = lm(log(avg_salary)~ gender*exper+ dept + clin + cert, data = rank_asso)
 summary(fit_asso)
 
 # Rank = Full professor: gender not significant
 # means no discrimination between male and female in rank of full professor?
-fit_prof = lm(log(avg_salary)~ gender + dept + clin + cert + exper, data = rank_prof)
+fit_prof =lm(log(avg_salary)~  gender*exper+ dept + clin + cert, data = rank_prof)
 summary(fit_prof)
 ```
 
