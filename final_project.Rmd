@@ -178,6 +178,7 @@ Also,the change in slope of gender when adding `rank` is very close to 10% and a
 * Find interactions
 ```{r}
 #fit all other predicators with gender
+# Cody said we could not use this why to find interaction, we should refer some articles. 
 interaction_list = vector("list",length = 5)
 for (i in 2:6) {
   fitml_inter = 
@@ -210,7 +211,22 @@ interaction_table = interaction_p_value %>%
 knitr::kable(interaction_table)
 ```
 
-As we can see from the result, when we focus on p-value,the only interaction is `rank` and `exper`. The effect of gender on salary is different with respect to the rank and exper. 
+* After refering some papers, we found " "" ", may be effect measure modifiers of the association between gender and salary. Then we use anova to test the interaction.
+
+```{r}
+# interaction rank*gender
+reg_in_rank = lm(log(avg_salary)~ exper + clin + cert + dept + gender * rank, data = law_data_change)
+anova(reg_in_rank)
+
+# interaction clin*gender
+reg_in_clin = lm(log(avg_salary)~ gender * clin + rank + cert + dept + exper, data = law_data_change)
+anova(reg_in_clin)
+
+# interaction exper*gender
+reg_in_exper = lm(log(avg_salary)~ gender * exper + rank + cert + dept + clin, data = law_data_change)
+anova(reg_in_exper)
+```
+
 
 ```{r}
 # final model
@@ -218,51 +234,21 @@ reg_n_prate = lm(log(avg_salary)~ gender*rank + gender*exper+ clin + dept + cert
 summary(reg_n_prate)
 ```
 
-
-```{r}
-# seperate regression models for rank
-rank_assi = 
-  law_data_change %>% 
-  filter(rank == "Assistant") 
-
-rank_asso =
-  law_data_change %>% 
-  filter(rank == "Associate")
-
-rank_prof = 
-  law_data_change %>% 
-  filter(rank == "Full professor")
-
-# Rank = Assistant
-fit_assi = lm(log(avg_salary)~ gender*exper + clin + dept+ cert, data = rank_assi)
-summary(fit_assi)
-
-# Rank = Associate: gender not significant
-# means no discrimination between male and female in rank of associate ?
-fit_asso = lm(log(avg_salary)~ gender*exper + clin + dept+ cert, data = rank_asso)
-summary(fit_asso)
-
-# Rank = Full professor: gender not significant
-# means no discrimination between male and female in rank of full professor?
-fit_prof =lm(log(avg_salary)~  gender*exper + clin + dept+ cert, data = rank_prof)
-summary(fit_prof)
-```
-
-
-
 Assumptions about residuals:
 1. Normally Distributed
 2. They have the same variance at every predictor (Homoscedasticity)
 3. They are independent of one another
 
 ```{r}
+# find outliers/influential points
 law_model = lm(log(avg_salary)~ gender * rank + dept + clin + cert + exper * gender, data = law_data_change)
 
 par(mfrow = c(2, 2))
 plot(law_model)
 ```
+
 ```{r}
-#delete the outlier and build a new dataset
+# delete the outlier and build a new dataset
 law_trans_minus = law_data[-c(184),]
 ```
 
@@ -280,19 +266,52 @@ rank_prof_minus =
   law_trans_minus %>% 
   filter(rank == "Full professor")
 
-# Rank = Assistant
+# Rank = Assistant: gender not significant
 fit_assi_minus = lm(log(avg_salary)~ gender*exper +clin + dept+ cert, data = rank_assi_minus)
 summary(fit_assi_minus)
 
-# Rank = Associate: gender not significant
-# means no discrimination between male and female in rank of associate ?
+# Rank = Associate: gender significant
 fit_asso_minus = lm(log(avg_salary)~ gender*exper + clin + dept+ cert, data = rank_asso_minus)
 summary(fit_asso_minus)
 
 # Rank = Full professor: gender not significant
-# means no discrimination between male and female in rank of full professor?
-fit_prof_minus =lm(log(avg_salary)~  gender*exper + clin + dept+ cert, data = rank_prof_minus)
+fit_prof_minus = lm(log(avg_salary)~  gender*exper + clin + dept+ cert, data = rank_prof_minus)
 summary(fit_prof_minus)
+```
+
+```{r}
+# seperate regression model for exper (according to Q1, median, Q3)
+exper_6_minus = 
+  law_trans_minus %>% 
+  filter(exper <= 6) 
+
+exper_6_9_minus =
+  law_trans_minus %>% 
+  filter(exper > 6 & exper <= 9)
+
+exper_9_14_minus = 
+  law_trans_minus %>% 
+  filter(exper > 9 & exper <= 14)
+
+exper_14_minus = 
+  law_trans_minus %>% 
+  filter(exper > 14)
+
+# exper < 6
+fit_6_minus = lm(log(avg_salary)~ gender*rank + dept + clin + cert, data = exper_6_minus)
+summary(fit_6_minus)
+
+# 6 < exper <= 9
+fit_6_9_minus = lm(log(avg_salary)~ gender*rank + dept + clin + cert, data = exper_6_9_minus)
+summary(fit_6_9_minus)
+
+# 9 < exper <= 14
+fit_9_14_minus = lm(log(avg_salary)~ gender*rank + dept + clin + cert, data = exper_9_14_minus)
+summary(fit_9_14_minus)
+
+# exper > 14
+fit_14_minus = lm(log(avg_salary)~ gender*rank + dept + clin + cert, data = exper_14_minus)
+summary(fit_14_minus)
 ```
 
 ```{r}
