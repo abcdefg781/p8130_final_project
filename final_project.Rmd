@@ -277,22 +277,44 @@ summary(fit_prof_minus)
 ```
 
 ```{r}
+# plot showing the interaction of rank
+plot_rank = 
+  ggplot(aes(x = gender,y = log(avg_salary),colour = rank, fill =rank, group = rank),data = law_trans_minus)+
+    geom_point(position ="jitter",size =2,  alpha =0.4)+
+    geom_smooth(se = FALSE, fill ="lightgrey",method ="lm",alpha =0.6,size =1.2)+
+    scale_colour_viridis_d("Rank")+
+    scale_fill_viridis_d("Rank") +
+    labs(title = "Rank",y="salary") +
+    theme(plot.title = element_text(hjust = 0, size = 10), axis.text.x = element_text(size = 9), axis.title.x = element_text(size = 10), axis.text.y = element_text(size = 9), axis.title.y = element_text(size = 10), legend.position = "none")
+
+plot_rank
+```
+```{r}
+# build a new dataset to stratify exper
+law_data_exper = law_trans_minus %>% 
+  mutate(exper = case_when(exper <= 6 ~ "exper_6",
+                           exper > 6 & exper <= 9 ~ "exper_6_9",
+                           exper > 9 & exper <= 14 ~ "exper_9_14",
+                               exper >= 14 ~ "exper_14"))  
+```
+
+```{r}
 # seperate regression model for exper (according to Q1, median, Q3)
 exper_6_minus = 
-  law_trans_minus %>% 
-  filter(exper <= 6) 
+  law_data_exper %>% 
+  filter(exper == "exper_6") 
 
 exper_6_9_minus =
-  law_trans_minus %>% 
-  filter(exper > 6 & exper <= 9)
+  law_data_exper %>% 
+  filter(exper == "exper_6_9") 
 
 exper_9_14_minus = 
-  law_trans_minus %>% 
-  filter(exper > 9 & exper <= 14)
+  law_data_exper %>% 
+  filter(exper == "exper_9_14") 
 
 exper_14_minus = 
-  law_trans_minus %>% 
-  filter(exper > 14)
+  law_data_exper %>% 
+  filter(exper == "exper_14") 
 
 # exper < 6
 fit_6_minus = lm(log(avg_salary)~ gender*rank + dept + clin + cert, data = exper_6_minus)
@@ -309,6 +331,19 @@ summary(fit_9_14_minus)
 # exper > 14
 fit_14_minus = lm(log(avg_salary)~ gender*rank + dept + clin + cert, data = exper_14_minus)
 summary(fit_14_minus)
+```
+```{r}
+# plot showing the interaction of exper
+plot_exper = 
+  ggplot(aes(x = gender,y = log(avg_salary),colour = exper, fill = exper, group = exper),data = law_data_exper)+
+    geom_point(position ="jitter",size =2,  alpha =0.4)+
+    geom_smooth(se = FALSE, fill ="lightgrey",method ="lm",alpha =0.6,size =1.2)+
+    scale_colour_viridis_d("Exper")+
+    scale_fill_viridis_d("Exper") +
+    labs(title = "Exper",y="salary") +
+    theme(plot.title = element_text(hjust = 0, size = 10), axis.text.x = element_text(size = 9), axis.title.x = element_text(size = 10), axis.text.y = element_text(size = 9), axis.title.y = element_text(size = 10), legend.position = "none")
+
+plot_exper
 ```
 
 ```{r}
