@@ -211,16 +211,12 @@ interaction_table = interaction_p_value %>%
 knitr::kable(interaction_table)
 ```
 
-* After refering some papers, we found " "" ", may be effect measure modifiers of the association between gender and salary. Then we use anova to test the interaction.
+* After refering some papers, we found "rank"and "exper", may be effect measure modifiers of the association between gender and salary. Then we use anova to test the interaction.
 
 ```{r}
 # interaction rank*gender
 reg_in_rank = lm(log(avg_salary)~ exper + clin + cert + dept + gender * rank, data = law_data_change)
 anova(reg_in_rank)
-
-# interaction clin*gender
-reg_in_clin = lm(log(avg_salary)~ gender * clin + rank + cert + dept + exper, data = law_data_change)
-anova(reg_in_clin)
 
 # interaction exper*gender
 reg_in_exper = lm(log(avg_salary)~ gender * exper + rank + cert + dept + clin, data = law_data_change)
