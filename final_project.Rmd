@@ -1,12 +1,11 @@
 ---
 title: "P8130_final_project"
-author: "Michael Yan"
-date: "11/15/2019"
+author: "Group 4: Yue Lai, Aiming Liu, Adeline Shin, Michael Yan"
+date: "12/16/2019"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(viridis)
 library(dplyr)
@@ -29,7 +28,7 @@ scale_fill_discrete = scale_fill_viridis_d
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
 
-
+# Importing and Tidying Data
 ```{r message = FALSE}
 # tidying data and adding a column with the average salary
 law_data = read_csv("./data/Lawsuit.csv") %>% 
@@ -57,6 +56,8 @@ law_data = read_csv("./data/Lawsuit.csv") %>%
          avg_salary = (sal94 + sal95) / 2)
 ```
 
+# Data Exploration
+## Initial Exploration
 ```{r}
 # data exploration pt. 1
 my_labels  =  list(dept = "Dept, n(%)", 
@@ -83,8 +84,7 @@ summary(table1, labelTranslations = my_labels,
   knitr::kable()
 ```
 
-
-* Yeo-Johnson: Test to Determine the best Transformation for average salary.
+## Average Salary Exploration
 ```{r}
 # data exploration pt. 2
 # investigate the shape of the distribution for variable ‘avg_salary’ and try different transformation
@@ -93,13 +93,13 @@ hist(law_data$avg_salary,
      xlab = "Average salary")
 ```
 
-Based on the graph we see an apparent right skewness. Therefore, we are not able to use BoxCox as it does not transform negative response variables. Hence we will use the yeojohnson function from the bestNormalize package to determine the power (Lamda) at which the outcome variable needs to be raised.
+Based on the histogram above, we can see a right-skewness of the average salary distribution. Since it is a negative response variable, we are not able to use a BoxCox transformation. Therefore, we will use the function "yeojohnson" from the bestNormalize package to determine the power (lambda) at which the outcome variable needs to be raised.
 
 ```{r}
 yeojohnson(law_data$avg_salary)
 ```
 
-Therefore, we will round up the Lamda and use the Log transformation of the response variable.
+From these results, we know to round up lambda and use the Log transformation of the response variable.
 
 ```{r}
 hist(log(law_data$avg_salary),
@@ -108,6 +108,7 @@ xlab = "Log-Transformed average salary")
 ```
 
 After doing log-transformation, the histogram shows an approximate normal distribution of the response variable, in this case, the log-transformed average salary.
+
 ```{r}
 law_data_1= read_csv("./data/Lawsuit.csv") %>% 
   janitor::clean_names() 
@@ -127,10 +128,9 @@ corrplot(L_data, method = "color",
          )
 ```
 
-
-* Find confounders
+# Finding Confounders
 ```{r}
-# Fit the model with only one variable:gender
+# fit the model with only one variable:gender
 law_data_change = law_data %>% 
   select(gender,dept,clin,cert,exper,rank,avg_salary)
 
@@ -139,7 +139,7 @@ fit_sum = lm(log(avg_salary) ~ gender,data = law_data_change) %>%
   broom::tidy() %>% 
   mutate(model = "log(avg_salary) ~ gender")
 
-#fit all other predicators with gender
+# fit all other predicators with gender
 p_value_list = vector("list",length = 5)
 for (i in 2:6) {
   fitml = 
@@ -167,17 +167,15 @@ confounder = p_value %>%
 knitr::kable(confounder)
 ```
 
-The criterion for finding confounders of `gender` is that after adding another variable into the existed model,the change in slope of gender is over 10%.
+In order to find confounders for the variable `gender`, the general criterion was used: if adding a variable changed the slope for `gender` by 10% or more, it should be considered a confounder.
 
-After running the code, we found that for variable `dept`,`clin`,``cert`,`prate` and `exper`
-the change of slope is over 10%, so these five variables are all confounders.
+After running the code, we found that the change in slope was over 10% for `gender` with the following variables: `dept`,`clin`,``cert`,`prate` and `exper`. Therefore, all five of these variables are confounders.
 
-Also,the change in slope of gender when adding `rank` is very close to 10% and according to previous research,we finally add `rank` as a confounder.
+Also, the change in slope of gender when adding `rank` was very close to 10%, so we decided to consider `rank` a confounder as well.
 
-
-* Find interactions
+# Finding Interactions
 ```{r}
-#fit all other predicators with gender
+# fit all other predicators with gender
 # Cody said we could not use this why to find interaction, we should refer some articles. 
 interaction_list = vector("list",length = 5)
 for (i in 2:6) {
@@ -185,6 +183,7 @@ for (i in 2:6) {
     as.formula(paste0("log(avg_salary) ~ gender+dept+clin+cert+exper+rank+gender * ",names(law_data_change)[i],collapse = ""))
   interaction_list[[i - 1]] = summary(lm(fitml_inter,data = law_data_change))
 }
+
 #fit predicators with gender
 interaction = vector("list",length = 5)
 for (i in 2:6) {
@@ -211,8 +210,9 @@ interaction_table = interaction_p_value %>%
 knitr::kable(interaction_table)
 ```
 
-* After refering some papers, we found "rank"and "exper", may be effect measure modifiers of the association between gender and salary. Then we use anova to test the interaction.
+After referring to some papers, we found that `rank` and `exper`, may have been effect measure modifiers for the association between gender and salary. Therefore, we decided to use ANOVA to test the interactions.
 
+## ANOVA Testing
 ```{r}
 # ANOVA to determine the significance of interaction part
 # interaction rank*gender
@@ -224,17 +224,20 @@ reg_in_exper = lm(log(avg_salary)~ gender * exper + rank + cert + dept + clin, d
 anova(reg_in_exper)
 ```
 
-
+# Initial Model after Considering Confounders and Interactions
 ```{r}
-# final model
+# initial model
 reg_n_prate = lm(log(avg_salary)~ gender*rank + gender*exper+ clin + dept + cert , data = law_data_change) 
 summary(reg_n_prate)
 ```
 
-Assumptions about residuals:
+## Model Assumption Validation
+Linear models rely on the following assumptions about the residuals:
 1. Normally Distributed
 2. They have the same variance at every predictor (Homoscedasticity)
 3. They are independent of one another
+
+These assumptions were tested using the following plots:
 
 ```{r}
 # find outliers/influential points
@@ -244,11 +247,18 @@ par(mfrow = c(2, 2))
 plot(law_model)
 ```
 
+As shown from these diagnostic graphs, point 184 was an outlier, and it was therefore removed from the overall dataset.
+
+## Removing an Outlier
 ```{r}
 # delete the outlier and build a new dataset
 law_trans_minus = law_data[-c(184),]
 ```
 
+After removing this outlier, the final model could be built with the updated dataset. Since there were effect measure modifiers found, the results were stratified by each of the variables found to have interaction earlier (`rank`, `exper`).
+
+# Stratification of Model Results for Effect Measure Modifiers
+## Stratification by Rank
 ```{r}
 # seperate regression models for rank
 rank_assi_minus = 
@@ -276,6 +286,8 @@ fit_prof_minus = lm(log(avg_salary)~  gender*exper + clin + dept+ cert, data = r
 summary(fit_prof_minus)
 ```
 
+As shown from these separate tables, there was a significant difference in salary among genders at the associate professor level, but not the assistant professor or full professor levels. The plot below shows these results graphically.
+
 ```{r}
 # plot showing the interaction of rank
 plot_rank = 
@@ -289,6 +301,8 @@ plot_rank =
 
 plot_rank
 ```
+
+## Stratification by Years of Experience
 ```{r}
 # build a new dataset to stratify exper
 law_data_exper = law_trans_minus %>% 
@@ -332,6 +346,9 @@ summary(fit_9_14_minus)
 fit_14_minus = lm(log(avg_salary)~ gender*rank + dept + clin + cert, data = exper_14_minus)
 summary(fit_14_minus)
 ```
+
+As shown in the summaries of the stratification for years of experience, gender is not a significant variable in any of the stratified models. These results are also shown in the plot below.
+
 ```{r}
 # plot showing the interaction of exper
 plot_exper = 
@@ -346,6 +363,9 @@ plot_exper =
 plot_exper
 ```
 
+# Final Model
+After determining which variables were confounders and effect measure modifiers, as well as removing outliers, the final recommended model is:
+
 ```{r}
 #final model after deleting the outlier
 final_law_model = lm(log(avg_salary)~ gender * rank + dept + clin + cert +  gender*exper, data = law_trans_minus)
@@ -353,9 +373,10 @@ summary(final_law_model)
 ```
 
 Below are the plots to test the assumptions for the final model:
+
 ```{r}
 par(mfrow = c(2, 2))
 plot(final_law_model)
 ```
 
-As seen, the Residuals vs. Fitted graph has a nearly straight line at 0, meaning that the assumption of heteroscedascity is valid. This is confirmed by the straight line in the Scale-Location graph as well. The Normal Q-Q Plot shows a straight line that does not have any outliers. Finally, the Residuals vs. Leverage graph shows us that there are no influential cases, as all points are well within Cook's distance, and the dashed line for Cook's distance cannot even be seen in the graph.
+As seen, the Residuals vs. Fitted graph has a nearly straight line at 0, meaning that the assumption of homoscedascity is valid. This is confirmed by the straight line in the Scale-Location graph as well. The Normal Q-Q Plot shows a straight line that does not have any outliers. Finally, the Residuals vs. Leverage graph shows us that there are no influential cases, as all points are well within Cook's distance, and the dashed line for Cook's distance cannot even be seen in the graph.
