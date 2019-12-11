@@ -372,6 +372,7 @@ final_law_model = lm(log(avg_salary)~ gender * rank + dept + clin + cert +  gend
 summary(final_law_model)
 ```
 
+## Final Model Assumptions
 Below are the plots to test the assumptions for the final model:
 
 ```{r}
@@ -379,4 +380,4 @@ par(mfrow = c(2, 2))
 plot(final_law_model)
 ```
 
-As seen, the Residuals vs. Fitted graph has a nearly straight line at 0, meaning that the assumption of homoscedascity is valid. This is confirmed by the straight line in the Scale-Location graph as well. The Normal Q-Q Plot shows a straight line that does not have any outliers. Finally, the Residuals vs. Leverage graph shows us that there are no influential cases, as all points are well within Cook's distance, and the dashed line for Cook's distance cannot even be seen in the graph.
+As seen, the Residuals vs. Fitted graph has a nearly straight line at 0, meaning that the assumption of homoscedascity is valid. This is confirmed by the straight line in the Scale-Location graph as well. The Normal Q-Q Plot shows a straight line that does not have any outliers. Finally, the Residuals vs. Leverage graph shows us that there are no influential cases, as all points are well within Cook's distance, and the dashed line for Cook's distance cannot even be seen in the graph. Therefore, we can proceed with this final recommended model.
