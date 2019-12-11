@@ -11,6 +11,9 @@ library(viridis)
 library(dplyr)
 library(bestNormalize)
 library(arsenal)
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -371,6 +374,11 @@ After determining which variables were confounders and effect measure modifiers,
 final_law_model = lm(log(avg_salary)~ gender * rank + dept + clin + cert +  gender*exper, data = law_trans_minus)
 summary(final_law_model)
 ```
+```{r}
+# make a table to show the final model
+tab_model(final_law_model)
+```
+
 
 ## Final Model Assumptions
 Below are the plots to test the assumptions for the final model:
