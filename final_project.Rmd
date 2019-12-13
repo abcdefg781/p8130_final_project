@@ -290,6 +290,10 @@ summary(fit_prof_minus)
 ```
 
 As shown from these separate tables, there was a significant difference in salary among genders at the associate professor level, but not the assistant professor or full professor levels. The plot below shows these results graphically.
+```{r}
+# make a table to show the models stratified by rank
+tab_model(fit_assi_minus,fit_asso_minus,fit_prof_minus,dv.labels = c("log(avg_salary):Assistant","log(avg_salary):Associate","log(avg_salary):Full professor"))
+```
 
 ```{r}
 # plot showing the interaction of rank
@@ -351,6 +355,10 @@ summary(fit_14_minus)
 ```
 
 As shown in the summaries of the stratification for years of experience, gender is not a significant variable in any of the stratified models. These results are also shown in the plot below.
+```{r}
+# make a table to show the models stratified by exper
+tab_model(fit_6_minus,fit_6_9_minus,fit_9_14_minus,fit_14_minus,dv.labels = c("log(avg_salary):exper_6","log(avg_salary):exper_6_9","log(avg_salary):exper_9_14","log(avg_salary):exper_14"))
+```
 
 ```{r}
 # plot showing the interaction of exper
